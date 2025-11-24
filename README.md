@@ -2,6 +2,8 @@
 
 ### An API that captures an image from an ESP32-CAM electricity meter (No smart meter here fam) and uses Gemini to read and return the current meter value.
 
+I couldnt get an OCR to extract the image contents, but a local llm or gemini-2.5-flash modal works great.
+
 to run:
 
 add a .env file and insert:
