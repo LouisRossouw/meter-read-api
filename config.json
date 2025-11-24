@@ -1,0 +1,10 @@
+{
+    "host": "0.0.0.0",
+    "port": 5001,
+    "esp32_cam_url": "http://10.0.0.155/",
+    "capture_params": "?_cb=1763761295748",
+
+    "gemini_moodel": "gemini-2.5-flash",
+    "schema_description":"The kilowatt-hour reading from the digital meter display.",
+    "prompt":"What is the electricity meter reading (kwh) displayed in the image in decimals?"
+}
