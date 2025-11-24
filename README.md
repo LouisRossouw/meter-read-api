@@ -1,1 +1,16 @@
-# meter-read-api
+# Meter Read API
+
+### An API that captures an image from an ESP32-CAM electricity meter (No smart meter here fam) and uses Gemini to read and return the current meter value.
+
+to run:
+
+add a .env file and insert:
+`GENAIAPI = "<GENAIAPI_key>"`
+
+1. `python -m venv venv`
+2. `pip install -r requirements.txt`
+3. `python main.py`
+
+parts:
+
+1. ESP32-Cam with the cameraWebServer firmware.
