@@ -1,7 +1,10 @@
+import os
 import io
+import datetime
 
 from flask import Flask, jsonify, send_file
 from lib.camera_api import Camera
+from lib.utils import read_json
 
 
 class MeterAPI:
@@ -21,14 +24,33 @@ class MeterAPI:
             img = self.cam.capture_img()
             return send_file(io.BytesIO(img), mimetype="image/jpeg")
 
-        @self.app.get("/electricity")
-        def electricity():
+        @self.app.get("/process-meter")
+        def process_meter():
             img = self.cam.capture_img()
             self.cam.save_image(img)
 
+            status = self.cam.get_status()
             result = self.gen_ai.read_img_with_genai()
 
+            date_time = datetime.datetime.now()
+
+            if result and status:
+                self.cam.save_manifest({
+                    **result,
+                    "camera_status": status,
+                    "date": str(date_time),
+                    "timestamp": str(date_time.timestamp())
+                })
+
             return jsonify(result)
+
+        @self.app.get("/electricity")
+        def electricity():
+            # Last recorded data
+            data = read_json(os.path.join(
+                self.settings.root_path, 'data', 'manifest.json'))
+
+            return jsonify(data)
 
         @self.app.get("/status")
         def status():
