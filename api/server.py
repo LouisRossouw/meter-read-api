@@ -2,7 +2,9 @@ import os
 import io
 import datetime
 
-from flask import Flask, jsonify, send_file
+from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse, StreamingResponse
+
 from lib.camera_api import Camera
 from lib.utils import read_json
 
@@ -11,61 +13,72 @@ class MeterAPI:
     def __init__(self, gen, settings):
         self.settings = settings
         self.gen_ai = gen
-
         self.cam = Camera(settings)
 
-        self.app = Flask(__name__)
+        self.app = FastAPI()
         self.routes()
 
     def routes(self):
 
-        @self.app.get('/img')
+        @self.app.get("/img")
         def img():
-            img = self.cam.capture_img()
-            return send_file(io.BytesIO(img), mimetype="image/jpeg")
+            img_bytes = self.cam.capture_img()
+
+            return StreamingResponse(
+                io.BytesIO(img_bytes),
+                media_type="image/jpeg"
+            )
 
         @self.app.get("/process-meter")
         def process_meter():
             img = self.cam.capture_img()
             self.cam.save_image(img)
 
-            status = self.cam.get_status()
+            cam_status = self.cam.get_status()
             result = self.gen_ai.read_img_with_genai()
 
             date_time = datetime.datetime.now()
 
-            if result and status:
+            if result and cam_status:
                 self.cam.save_manifest({
                     **result,
-                    "camera_status": status,
+                    "camera_status": cam_status,
                     "date": str(date_time),
                     "timestamp": str(date_time.timestamp())
                 })
 
-            return jsonify(result)
+                return JSONResponse(
+                    content={"ok": True},
+                    status_code=status.HTTP_200_OK
+                )
+
+            return JSONResponse(
+                content={"ok": False},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         @self.app.get("/electricity")
         def electricity():
-            # Last recorded data
-            data = read_json(os.path.join(
-                self.settings.root_path, 'data', 'manifest.json'))
-
-            return jsonify(data)
+            data = read_json(
+                os.path.join(self.settings.root_path, "data", "manifest.json")
+            )
+            return data
 
         @self.app.get("/status")
-        def status():
-            status = self.cam.get_status()
-            return jsonify(status)
+        def status_route():
+            status_data = self.cam.get_status()
+            return status_data
 
         @self.app.get("/config")
         def config():
-            config = self.settings.get_config()
-            return jsonify(config)
+            cfg = self.settings.get_config()
+            return cfg
 
-        # TODO
+        # TODO:
         # @self.app.put("/config")
         # def update_config():
         #     return
 
     def run(self, host="0.0.0.0", port=5001):
-        self.app.run(host=host, port=port)
+        import uvicorn
+        uvicorn.run(self.app, host=host, port=port)
