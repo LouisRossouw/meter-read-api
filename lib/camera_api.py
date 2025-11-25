@@ -38,10 +38,8 @@ class Camera():
         """Save image bytes to disk."""
         save_bytes_as_img(img_bytes, self.save_dir, "capture.jpg")
 
-    def save_manifest(self, status):
-        write_to_json(os.path.join(self.save_dir, "manifest.json"), {
-            "status": status
-        })
+    def save_manifest(self, data):
+        write_to_json(os.path.join(self.save_dir, "manifest.json"), data)
 
     # def run(self):
     #     print("Running")
