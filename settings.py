@@ -6,7 +6,8 @@ class Settings():
     def __init__(self):
         self.root_path = os.path.dirname(__file__)
 
-        self.config_path = os.path.join(self.root_path, "config.json")
+        self.config_path = os.path.join(
+            self.root_path, "config", "config.json")
         self.config = read_json(self.config_path)
 
     def get_config(self):
