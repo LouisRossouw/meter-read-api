@@ -1,4 +1,3 @@
-# main.py
 from api.server import MeterAPI
 from settings import Settings
 from lib.gen_ai import GenAI
