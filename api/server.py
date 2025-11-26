@@ -22,6 +22,8 @@ class MeterAPI:
 
         @self.app.get("/img")
         def img():
+            self.cam.check()
+
             img_bytes = self.cam.capture_img()
 
             return StreamingResponse(
@@ -31,6 +33,8 @@ class MeterAPI:
 
         @self.app.get("/process-meter")
         def process_meter():
+            self.cam.check()
+
             img = self.cam.capture_img()
             self.cam.save_image(img)
 

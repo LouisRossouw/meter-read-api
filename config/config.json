@@ -6,5 +6,11 @@
 
     "gemini_moodel": "gemini-2.5-flash",
     "schema_description":"The kilowatt-hour reading from the digital meter display.",
-    "prompt":"What is the electricity meter reading (kwh) displayed in the image in decimals?"
+    "prompt":"What is the electricity meter reading (kwh) displayed in the image in decimals?",
+
+    "default_cam_settings": [
+        {"var": "led_intensity", "val": "170"}, 
+        {"var":"hmirror", "val": "1"}, 
+        {"var":"vflip", "val":"1"}
+    ]
 }

@@ -1,5 +1,6 @@
 import os
 import requests
+from time import sleep
 from lib.utils import save_bytes_as_img, write_to_json, read_json
 
 
@@ -12,6 +13,40 @@ class Camera():
         self.status_endpoint = "status"
         self.capture_endpoint = "capture"
         self.save_dir = os.path.join(settings.root_path, "data")
+
+        # TODO; Add all the camera settings into the config, If camera status does not
+        # match what is set in config, then update it
+        self.default_cam_settings = settings.config.get("default_cam_settings")
+
+    def check(self):
+        """ Confirms that the camera settings are correct before, if not set it. """
+
+        cam_status = self.get_status()
+        led_intensity = (cam_status.get('led_intensity'))
+
+        if led_intensity == 0:
+            return self.set_default_settings()
+
+        return True
+
+    def set_default_settings(self):
+        """ Updates the cameras settings with the default settings from config. """
+
+        # Camera server can only update one setting per request.
+        for setting in self.default_cam_settings:
+            var = setting.get("var")
+            val = setting.get("val")
+            print('Configuring camera;', var, '->', val)
+
+            res = requests.get(
+                f"{self.base_url}/control?var={var}&val={val}")
+
+            sleep(0.5)
+            if res.status_code != 200:
+                raise Exception(
+                    f"Failed to configure camera: {res.status_code}")
+
+        return True
 
     def capture_img(self):
         """Capture an image from the camera."""
