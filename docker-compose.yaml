@@ -1,12 +1,12 @@
 services:
   meter-read-api:
-  build: .
-  image: meter-read-api
-  volumes:
-    - ./data:/app/data
-    - ./configs:/app/configs
-  restart: unless-stopped
-  ports:
-    - "5001:5001"
-    # environment:
-    #   - ENV_VAR=your_value
+    build: .
+    image: meter-read-api
+    volumes:
+      - ./data:/app/data
+      - ./configs:/app/configs
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+      # environment:
+      #   - ENV_VAR=your_value
