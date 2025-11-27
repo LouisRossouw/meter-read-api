@@ -52,7 +52,7 @@ class MeterAPI:
                     break
 
                 if attempt_count >= 2:
-                    # TODO; Maybe send out a notifcation.
+                    # TODO; Maybe send out a notification.
                     print('Could not get the kWh; Img screen is possibly blank')
                     break
 
