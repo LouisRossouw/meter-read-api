@@ -21,6 +21,7 @@ def save_bytes_as_img(img_bytes, path_to_dir, file_name):
     print("Saved", file_name)
 
 
+# I need to convert it like this because the llm struggles to see the decimal.
 def convert_to_decimal_floats(value):
     return float(f"{value[:len(value) - 2]}.{value[-2:]}")
 
