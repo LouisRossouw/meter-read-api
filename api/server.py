@@ -1,5 +1,6 @@
 import os
 import io
+import time
 import datetime
 
 from fastapi import FastAPI, status
@@ -39,7 +40,25 @@ class MeterAPI:
             self.cam.save_image(img)
 
             cam_status = self.cam.get_status()
-            result = self.gen_ai.read_img_with_genai()
+
+            # Multiple attempts in the event the meter screen is blank at the
+            # exact same time an image is taken, resulting in an incorrect 0.0 kWh result from Gemini.
+            attempt_count = 0
+            while True:
+                result = self.gen_ai.read_img_with_genai()
+                maybe_kwh = result.get('kwh')
+
+                if maybe_kwh > 0:
+                    break
+
+                if attempt_count >= 2:
+                    # TODO; Maybe send out a notifcation.
+                    print('Could not get the kWh; Img screen is possibly blank')
+                    break
+
+                attempt_count += 1
+                print('Could not get the kWh. attempt:', attempt_count)
+                time.sleep(1)
 
             date_time = datetime.datetime.now()
 
