@@ -60,9 +60,26 @@ class GenAI():
 
         json_object = json.loads(response.text)
 
-        data = {"kwh": utils.convert_to_decimal_floats(
-            str(json_object.get('kwh')))}
+        return json_object.get('kwh')
 
-        print("GenAI result:", data)
 
-        return data
+def check_kwh_value(attempt_count, current_kwh_raw, prev_kwh_raw):
+    """ Checks the kWh value is correct, repeat the while loop if not.  """
+
+    # TODO: This is a temp fix.
+    if prev_kwh_raw == "None" and current_kwh_raw > 0:
+        return True
+
+    if attempt_count >= 2:
+        print('Could not get the kWh; Img screen is possibly blank')
+        return True
+
+    # Sometimes the meter doesn't include a zero decimal, ie 24.50 will be 24.5
+    if current_kwh_raw and len(str(current_kwh_raw)) != len(prev_kwh_raw):
+        diff = current_kwh_raw - int(prev_kwh_raw)
+        if diff < -500:  # 5.00 units
+            print("Difference is too large, something might be wrong", diff)
+            return False
+
+    if current_kwh_raw > 0:
+        return True
