@@ -13,6 +13,8 @@ add a .env file and insert:
 2. `pip install -r requirements.txt`
 3. run `python main.py` and an API will be available.
 
+`docker compose up -d --build`
+
 parts:
 
 1. ESP32-Cam with the cameraWebServer firmware.
