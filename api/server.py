@@ -7,7 +7,8 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from lib.camera_api import Camera
-from lib.utils import read_json
+from lib.gen_ai import check_kwh_value
+from lib.utils import read_json, convert_to_decimal_floats
 
 
 class MeterAPI:
@@ -41,30 +42,34 @@ class MeterAPI:
 
             cam_status = self.cam.get_status()
 
+            manifest = read_json(os.path.join(
+                self.settings.root_path, "data", "manifest.json"))
+
+            prev_kwh = manifest.get('kwh')
+            prev_kwh_raw = str(prev_kwh).replace('.', '')
+
             # Multiple attempts in the event the meter screen is blank at the
             # exact same time an image is taken, resulting in an incorrect 0.0 kWh result from Gemini.
-            attempt_count = 0
+            attempts = 0
             while True:
-                result = self.gen_ai.read_img_with_genai()
-                maybe_kwh = result.get('kwh')
 
-                if maybe_kwh > 0:
+                cur_kwh_raw = self.gen_ai.read_img_with_genai()
+                cur_kwh = convert_to_decimal_floats(str(cur_kwh_raw))
+
+                kwh_ok = check_kwh_value(attempts, cur_kwh_raw, prev_kwh_raw)
+
+                if kwh_ok:
                     break
 
-                if attempt_count >= 2:
-                    # TODO; Maybe send out a notification.
-                    print('Could not get the kWh; Img screen is possibly blank')
-                    break
-
-                attempt_count += 1
-                print('Could not get the kWh. attempt:', attempt_count)
-                time.sleep(1)
+                print('Could not get the kWh. attempts:', attempts)
+                attempts += 1
+                time.sleep(2)
 
             date_time = datetime.datetime.now()
 
-            if result and cam_status:
+            if cur_kwh and cam_status:
                 self.cam.save_manifest({
-                    **result,
+                    "kwh": cur_kwh if kwh_ok else None,
                     "camera_status": cam_status,
                     "date": str(date_time),
                     "timestamp": str(date_time.timestamp())
