@@ -11,6 +11,7 @@
     "default_cam_settings": [
         {"var": "led_intensity", "val": "170"}, 
         {"var":"hmirror", "val": "1"}, 
-        {"var":"vflip", "val":"1"}
+        {"var":"vflip", "val":"1"},
+        {"var":"framesize", "val":"10"}
     ]
 }
