@@ -51,23 +51,35 @@ class MeterAPI:
             # Multiple attempts in the event the meter screen is blank at the
             # exact same time an image is taken, resulting in an incorrect 0.0 kWh result from Gemini.
             attempts = 0
-            while True:
+            cur_kwh = None
+            kwh_ok = False
 
+            while attempts < 3:
                 cur_kwh_raw = self.gen_ai.read_img_with_genai()
-                cur_kwh = convert_to_decimal_floats(str(cur_kwh_raw))
 
-                kwh_ok = check_kwh_value(attempts, cur_kwh_raw, prev_kwh_raw)
+                if cur_kwh_raw is None:
+                    print(f"Gemini API returned no result (attempt {attempts})")
+                    attempts += 1
+                    time.sleep(2)
+                    continue
+
+                try:
+                    cur_kwh = convert_to_decimal_floats(str(cur_kwh_raw))
+                    kwh_ok = check_kwh_value(attempts, cur_kwh_raw, prev_kwh_raw)
+                except Exception as e:
+                    print(f"Error processing kWh value: {e}")
+                    kwh_ok = False
 
                 if kwh_ok:
                     break
 
-                print('Could not get the kWh. attempts:', attempts)
+                print('Could not get a valid kWh. attempts:', attempts)
                 attempts += 1
                 time.sleep(2)
 
             date_time = datetime.datetime.now()
 
-            if cur_kwh and cam_status:
+            if cam_status:
                 self.cam.save_manifest({
                     "kwh": cur_kwh if kwh_ok else None,
                     "camera_status": cam_status,
@@ -76,12 +88,12 @@ class MeterAPI:
                 })
 
                 return JSONResponse(
-                    content={"ok": True},
+                    content={"ok": False, "kwh": kwh_ok},
                     status_code=status.HTTP_200_OK
                 )
 
             return JSONResponse(
-                content={"ok": False},
+                content={"ok": False, "error": "Camera status unavailable"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
