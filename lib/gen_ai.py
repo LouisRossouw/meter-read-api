@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 
 from lib import utils
 from google import genai
-from google.genai import types
+from google.genai import types, errors
+
 
 load_dotenv()
 
@@ -18,7 +19,7 @@ class GenAI():
         self.settings = settings
 
         self.img = f"{self.settings.root_path}/data/capture.jpg"
-        self.model = self.settings.config.get('gemini_moodel')
+        self.model = self.settings.config.get('gemini_model')
 
         # Schema format.
         self.reading_schema = types.Schema(
@@ -43,24 +44,34 @@ class GenAI():
             print("Error: Image file not found.")
             return None
 
-        response = client.models.generate_content(
-            model=self.model,
-            contents=[
-                types.Part.from_bytes(
-                    data=image_bytes,
-                    mime_type='image/jpeg',
-                ),
-                self.settings.config.get('prompt')
-            ],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=self.reading_schema,
+        try:
+            response = client.models.generate_content(
+                model=self.model,
+                contents=[
+                    types.Part.from_bytes(
+                        data=image_bytes,
+                        mime_type='image/jpeg',
+                    ),
+                    self.settings.config.get('prompt')
+                ],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=self.reading_schema,
+                )
             )
-        )
 
-        json_object = json.loads(response.text)
+            json_object = json.loads(response.text)
+            return json_object.get('kwh')
 
-        return json_object.get('kwh')
+        except errors.ClientError as e:
+            if getattr(e, 'code', None) == 429:
+                print("Gemini API Quota exceeded. Ignoring request.")
+                return None
+            print(f"Gemini API Client Error: {e}")
+            return None
+        except Exception as e:
+            print(f"Unexpected error calling Gemini API: {e}")
+            return None
 
 
 def check_kwh_value(attempt_count, current_kwh_raw, prev_kwh_raw):
